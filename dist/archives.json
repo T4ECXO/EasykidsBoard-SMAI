@@ -1,0 +1,23 @@
+{
+  "esp32": {
+    "architecture": "esp32",
+    "board": "EasyKids3in1 BT-WiFi",
+    "archiveFileName": "esp32-4.3.5.zip",
+    "size": "254354687",
+    "checksum": "SHA-256:898F7C1FEB6005AEA737C01442A596210CF7D84ABD9FC6205F82FAA80BF076F6"
+  },
+  "esp32-aicar": {
+    "architecture": "esp32-aicar",
+    "board": "EasyKids3in1 AI-Car",
+    "archiveFileName": "esp32-aicar-4.3.5.zip",
+    "size": "254465951",
+    "checksum": "SHA-256:85091C7A3B9C35FC73F32C4D73EB8B220E7729E1D842D7463BD10587E919DA36"
+  },
+  "esp32-gamepad": {
+    "architecture": "esp32-gamepad",
+    "board": "EasyKids3in1 Gamepad",
+    "archiveFileName": "esp32-gamepad-4.3.5.zip",
+    "size": "193947629",
+    "checksum": "SHA-256:60B4781A0434AEF91A8C9D6A5A2529AA21C31468F18EF29AE95D711DD8BD1630"
+  }
+}

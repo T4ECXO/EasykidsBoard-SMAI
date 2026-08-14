@@ -1,0 +1,7 @@
+# Build output. The platform zips are 230-320 MB each, over GitHub's 100 MB
+# per-file limit for repository contents -- they ship as release assets instead.
+/staging/
+/dist/*.zip
+
+# dist/archives.json is kept: make_index.py needs the sizes and checksums.
+!/dist/archives.json
