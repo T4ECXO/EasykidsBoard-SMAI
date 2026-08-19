@@ -18,7 +18,8 @@ import json
 import os
 import sys
 
-VERSION = "4.3.5"
+VERSION = "4.3.6"
+SOURCE_VERSION = os.environ.get("EASYKIDS_SOURCE_VERSION", "4.3.5")
 PACKAGE_NAME = "EasyKidsRobotics"
 RELEASE_BASE = "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/" + VERSION
 REPO_URL = "https://github.com/T4ECXO/EasykidsBoard-SMAI"
@@ -69,7 +70,7 @@ def main():
     for key in sorted(archives):
         meta = archives[key]
         arch = meta["architecture"]
-        installed = load(os.path.join(HARDWARE, arch, VERSION, "installed.json"))
+        installed = load(os.path.join(HARDWARE, arch, SOURCE_VERSION, "installed.json"))
         src = installed["packages"][0]["platforms"][0]
 
         deps = []

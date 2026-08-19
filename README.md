@@ -11,7 +11,7 @@ Arduino IDE → **File ▸ Preferences ▸ Additional boards manager URLs**, add
 https://raw.githubusercontent.com/T4ECXO/EasykidsBoard-SMAI/main/package_easykidsrobotics_index.json
 ```
 
-Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.5**.
+Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.6**.
 
 > Remove the upstream `EasyKidsRoboticsDev` boards URL first if you have it.
 > Both indexes declare the same package (`EasyKidsRobotics`) at the same version,
@@ -35,7 +35,7 @@ arduino-cli core install EasyKidsRobotics:esp32 --additional-urls <same url>
 FQBNs are unchanged from the upstream package, so existing sketches and board
 selections keep working.
 
-## What differs from upstream 4.3.5
+## What differs from upstream 4.3.6
 
 **The index is self-contained.** The upstream index lists its toolchains under
 `packager: "esp32"` while declaring them under its own package name, and never
@@ -49,7 +49,7 @@ dependencies were refreshed; no EasyKids code was touched, and each core keeps
 its own `EasyKids_*.h` set (`EasyKids_AppControl.h` on BT-WiFi,
 `EasyKids_Gamepad.h` on Gamepad, and so on).
 
-| Library | Upstream 4.3.5 | Here |
+| Library | Upstream 4.3.6 | Here |
 |---|---|---|
 | Adafruit BusIO | 1.15.0–1.16.1 | **1.17.4** |
 | Adafruit Unified Sensor | ~1.1.14 | **1.1.15** |
@@ -82,7 +82,7 @@ python tools/make_index.py          # write package_easykidsrobotics_index.json
 anything, so `Arduino15` is never modified. Archives land in `dist/` with their
 SHA-256 and size recorded in `dist/archives.json`.
 
-Then attach the three zips from `dist/` to a GitHub release tagged `4.3.5` and
+Then attach the three zips from `dist/` to a GitHub release tagged `4.3.6` and
 push the regenerated index. The archives are 230–320 MB each, over GitHub's
 100 MB per-file limit for repository contents, so they have to be release
 assets — `dist/` is gitignored for that reason.
