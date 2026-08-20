@@ -11,7 +11,7 @@ Arduino IDE → **File ▸ Preferences ▸ Additional boards manager URLs**, add
 https://raw.githubusercontent.com/T4ECXO/EasykidsBoard-SMAI/main/package_easykidsrobotics_index.json
 ```
 
-Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.6**.
+Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.7**.
 
 > Remove the upstream `EasyKidsRoboticsDev` boards URL first if you have it.
 > Both indexes declare the same package (`EasyKidsRobotics`) at the same version,
@@ -44,10 +44,23 @@ URL alone fails unless the Espressif index is also configured. Here every tool
 the platforms depend on is inlined under the `EasyKidsRobotics` packager, so the
 one URL above is enough.
 
-**Vendored libraries in `EasyKids3in1Robot` are updated.** Only third-party
-dependencies were refreshed; no EasyKids code was touched, and each core keeps
-its own `EasyKids_*.h` set (`EasyKids_AppControl.h` on BT-WiFi,
-`EasyKids_Gamepad.h` on Gamepad, and so on).
+**Vendored libraries in `EasyKids3in1Robot` are updated.** Third-party
+dependencies are refreshed while each core keeps its own `EasyKids_*.h` set
+(`EasyKids_AppControl.h` on BT-WiFi, `EasyKids_Gamepad.h` on Gamepad, and so
+on).
+
+**Line following has an additional stable motor-mapping API.** `trackLine2`
+accepts either two motor numbers (`"left:right"`) or four motor numbers
+(`"left-top:left-bottom:right-top:right-bottom"`). For example:
+
+```cpp
+trackLine2(30, 1.0, 1.0, "1:2");
+trackLine2(30, 1.0, 1.0, "1:2:3:4");
+```
+
+It reads the line sensors once per update, keeps derivative history separate
+from `trackLine`, and suppresses derivative kick on the first update or after a
+pause. Invalid, duplicate, or ambiguous motor lists are ignored.
 
 | Library | Upstream 4.3.6 | Here |
 |---|---|---|
@@ -82,7 +95,7 @@ python tools/make_index.py          # write package_easykidsrobotics_index.json
 anything, so `Arduino15` is never modified. Archives land in `dist/` with their
 SHA-256 and size recorded in `dist/archives.json`.
 
-Then attach the three zips from `dist/` to a GitHub release tagged `4.3.6` and
+Then attach the three zips from `dist/` to a GitHub release tagged `4.3.7` and
 push the regenerated index. The archives are 230–320 MB each, over GitHub's
 100 MB per-file limit for repository contents, so they have to be release
 assets — `dist/` is gitignored for that reason.

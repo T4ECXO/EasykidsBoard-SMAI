@@ -22,7 +22,7 @@ import sys
 import stat
 import zipfile
 
-VERSION = "4.3.6"
+VERSION = "4.3.7"
 SOURCE_VERSION = os.environ.get("EASYKIDS_SOURCE_VERSION", "4.3.5")
 
 ARDUINO15 = os.path.expandvars(r"%LOCALAPPDATA%\Arduino15")
@@ -50,7 +50,41 @@ PLATFORMS = {
 # Adafruit_PWMServoDriverE, Fonts, logo.h, ...) is left exactly as the core
 # shipped it.
 
-TRACK_LINE2 = r'''
+TRACK_LINE2 = r'''// EASYKIDS_TRACK_LINE2_BEGIN
+// Keep PID history separate from trackLine(), so alternating APIs does not
+// create a derivative spike.
+float trackLine2PreviousError = 0;
+uint32_t trackLine2LastUpdate = 0;
+bool trackLine2HasPreviousError = false;
+
+void calculateTrackLine2(int Speed, float iKP, float iKD)
+{
+    KP = iKP / 10;
+    KD = iKD / 10;
+
+    // readline() mutates lastPosition, so read the sensors exactly once.
+    errors = readline() - setPoint;
+
+    uint32_t now = millis();
+    if (!trackLine2HasPreviousError || (now - trackLine2LastUpdate) > 100)
+    {
+        derivative = 0;
+        trackLine2HasPreviousError = true;
+    }
+    else
+    {
+        derivative = errors - trackLine2PreviousError;
+    }
+
+    output = (KP * errors) + (KD * derivative);
+    trackLine2PreviousError = errors;
+    trackLine2LastUpdate = now;
+
+    int baseSpeed = clamp(Speed, -100, 100);
+    leftMotor = clamp(baseSpeed - output, -100, 100);
+    rightMotor = clamp(baseSpeed + output, -100, 100);
+}
+
 // Motor selects one physical motor (1 to 4).
 // Example: trackLine2(25, 1.0, 1.0, 1);  // command M1 only
 void trackLine2(int Speed, float iKP, float DP, int Motor)
@@ -60,28 +94,31 @@ void trackLine2(int Speed, float iKP, float DP, int Motor)
         return;
     }
 
-    KP = iKP / 10;
-    KD = DP / 10;
-    errors = readline() - setPoint;
-    derivative = errors - previous_error;
-    output = (KP * errors) + (KD * derivative);
-    previous_error = errors;
-    leftMotor = clamp(Speed - output, -100, 100);
-
-    motor(Motor, leftMotor);
+    calculateTrackLine2(Speed, iKP, DP);
+    motor(Motor, (Motor <= 2) ? leftMotor : rightMotor);
 }
 
-// A colon-separated list selects only those motors.
-// The first half is the left side and the remaining motors are the right side.
-// Examples: trackLine2(25, 1.0, 1.0, "1:3"); or "1:2:3:4".
+// Two motors mean left:right.
+// Four motors mean left-top:left-bottom:right-top:right-bottom.
+// Examples: "1:2" or "1:2:3:4".
 void trackLine2(int Speed, float iKP, float DP, const char *Motors)
 {
     int selected[4];
     int count = 0;
     const char *cursor = Motors;
 
-    while (*cursor && count < 4)
+    if (cursor == NULL || *cursor == '\0')
     {
+        return;
+    }
+
+    while (*cursor)
+    {
+        if (count >= 4)
+        {
+            return;
+        }
+
         int motorNumber = 0;
         bool hasDigit = false;
         while (*cursor >= '0' && *cursor <= '9')
@@ -94,10 +131,23 @@ void trackLine2(int Speed, float iKP, float DP, const char *Motors)
         {
             return;
         }
+
+        for (int i = 0; i < count; i++)
+        {
+            if (selected[i] == motorNumber)
+            {
+                return;
+            }
+        }
         selected[count++] = motorNumber;
+
         if (*cursor == ':')
         {
             cursor++;
+            if (*cursor == '\0')
+            {
+                return;
+            }
         }
         else if (*cursor)
         {
@@ -105,26 +155,20 @@ void trackLine2(int Speed, float iKP, float DP, const char *Motors)
         }
     }
 
-    if (count < 1 || count > 4)
+    if (count != 2 && count != 4)
     {
         return;
     }
 
-    KP = iKP / 10;
-    KD = DP / 10;
-    errors = readline() - setPoint;
-    derivative = errors - previous_error;
-    output = (KP * errors) + (KD * derivative);
-    previous_error = errors;
-    leftMotor = clamp(Speed - output, -100, 100);
-    rightMotor = clamp(Speed + output, -100, 100);
+    calculateTrackLine2(Speed, iKP, DP);
 
-    int leftCount = (count == 1) ? 1 : count / 2;
+    int leftCount = count / 2;
     for (int i = 0; i < count; i++)
     {
         motor(selected[i], (i < leftCount) ? leftMotor : rightMotor);
     }
 }
+// EASYKIDS_TRACK_LINE2_END
 '''
 
 VENDORED = [
@@ -158,20 +202,51 @@ def refresh_vendored(core_dir):
         copied.append(rel)
     return copied
 
-def add_track_line2(core_dir):
-    """Add the custom motor-mapping line follower to the staged core."""
+def update_line_follower(core_dir):
+    """Install trackLine2 and apply the safe one-read PID fixes."""
     pid_path = os.path.join(core_dir, "libraries", "EasyKids3in1Robot", "EasyKids_PID.h")
     if not os.path.isfile(pid_path):
         return False  # This board variant has no line-follower implementation.
 
     with open(pid_path, encoding="utf-8") as fh:
         source = fh.read()
-    if "void trackLine2(" in source:
-        return False
+
+    # previous_error stores an error, not a sensor position. Starting it at the
+    # set point creates a derivative kick on the first tracking update.
+    source = source.replace(
+        "float previous_error = setPoint;",
+        "float previous_error = 0;",
+        1,
+    )
+
+    # The upstream trackLine() reads twice: once for PID and once for logging.
+    # readline() mutates lastPosition, so log the already-read value instead.
+    source = source.replace(
+        "    errors = (readline() - setPoint);\n"
+        "    Serial.println(readline());",
+        "    int linePosition = readline();\n"
+        "    errors = linePosition - setPoint;\n"
+        "    Serial.println(linePosition);",
+        1,
+    )
 
     marker = "\nvoid trackDashedLine("
     if marker not in source:
         sys.exit("trackLine insertion point not found: %s" % pid_path)
+
+    # Replace an older custom implementation when rebuilding from a locally
+    # installed package that already contains trackLine2.
+    custom_start = source.find("\n// EASYKIDS_TRACK_LINE2_BEGIN")
+    if custom_start < 0:
+        custom_start = source.find("\n// Motor selects one physical motor (1 to 4).")
+    if custom_start >= 0:
+        custom_end = source.find(marker, custom_start)
+        if custom_end < 0:
+            sys.exit("trackLine2 end marker not found: %s" % pid_path)
+        source = source[:custom_start] + source[custom_end:]
+    elif "void trackLine2(" in source:
+        sys.exit("unknown existing trackLine2 implementation: %s" % pid_path)
+
     with open(pid_path, "w", encoding="utf-8", newline="") as fh:
         fh.write(source.replace(marker, "\n" + TRACK_LINE2 + marker, 1))
     return True
@@ -227,10 +302,10 @@ def main():
         shutil.copytree(src, staged)
 
         copied = refresh_vendored(staged)
-        added_track_line2 = add_track_line2(staged)
+        updated_line_follower = update_line_follower(staged)
         print("[%s] refreshed %d vendored files" % (key, len(copied)), flush=True)
-        if added_track_line2:
-            print("[%s] added trackLine2 custom motor mapping" % key, flush=True)
+        if updated_line_follower:
+            print("[%s] updated line follower" % key, flush=True)
 
         zip_name = "%s-%s.zip" % (key, VERSION)
         zip_path = os.path.join(DIST, zip_name)

@@ -12,12 +12,12 @@
         {
           "name": "EasyKidsRobotics",
           "architecture": "esp32",
-          "version": "4.3.6",
+          "version": "4.3.7",
           "category": "Contributed",
-          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.6/esp32-4.3.6.zip",
-          "archiveFileName": "esp32-4.3.6.zip",
-          "checksum": "SHA-256:4E432FF7B23158FFD3963E2265347F114A51161E00270D9B4F1AFDBD7167B853",
-          "size": "256226434",
+          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.7/esp32-4.3.7.zip",
+          "archiveFileName": "esp32-4.3.7.zip",
+          "checksum": "SHA-256:ABE31E154B32316C997CDA27984AC6E7C2C52C6AA715983385FE183410225960",
+          "size": "256226726",
           "help": {
             "online": "https://github.com/T4ECXO/EasykidsBoard-SMAI"
           },
@@ -87,11 +87,11 @@
         {
           "name": "EasyKidsRobotics",
           "architecture": "esp32-aicar",
-          "version": "4.3.6",
+          "version": "4.3.7",
           "category": "Contributed",
-          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.6/esp32-aicar-4.3.6.zip",
-          "archiveFileName": "esp32-aicar-4.3.6.zip",
-          "checksum": "SHA-256:FDB2766C4FED261156868EF62BCD5DE2E7D1B50BFA618EC83296755B88A88877",
+          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.7/esp32-aicar-4.3.7.zip",
+          "archiveFileName": "esp32-aicar-4.3.7.zip",
+          "checksum": "SHA-256:7D17206E335661F7945E023F145F99CCA86BF88BA4467AEBD31CD43BEE117FC5",
           "size": "256337539",
           "help": {
             "online": "https://github.com/T4ECXO/EasykidsBoard-SMAI"
@@ -162,12 +162,12 @@
         {
           "name": "EasyKidsRobotics",
           "architecture": "esp32-gamepad",
-          "version": "4.3.6",
+          "version": "4.3.7",
           "category": "Contributed",
-          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.6/esp32-gamepad-4.3.6.zip",
-          "archiveFileName": "esp32-gamepad-4.3.6.zip",
-          "checksum": "SHA-256:75C49205BA731FD490249B61362CB0C9B8239E1E14622803D70BC9FE8E438743",
-          "size": "345715755",
+          "url": "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/4.3.7/esp32-gamepad-4.3.7.zip",
+          "archiveFileName": "esp32-gamepad-4.3.7.zip",
+          "checksum": "SHA-256:219EAE09B2A3FF8C65BD92EC3072CE05D2184DE4F16D9DC4552DAFC723FFCBA8",
+          "size": "345716047",
           "help": {
             "online": "https://github.com/T4ECXO/EasykidsBoard-SMAI"
           },
