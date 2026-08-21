@@ -22,7 +22,7 @@ import sys
 import stat
 import zipfile
 
-VERSION = "4.3.7"
+VERSION = "4.3.8"
 SOURCE_VERSION = os.environ.get("EASYKIDS_SOURCE_VERSION", "4.3.5")
 
 ARDUINO15 = os.path.expandvars(r"%LOCALAPPDATA%\Arduino15")
@@ -49,127 +49,6 @@ PLATFORMS = {
 # sync with upstream. Everything else in that folder (EasyKids_*.h, TFT_eSPI,
 # Adafruit_PWMServoDriverE, Fonts, logo.h, ...) is left exactly as the core
 # shipped it.
-
-TRACK_LINE2 = r'''// EASYKIDS_TRACK_LINE2_BEGIN
-// Keep PID history separate from trackLine(), so alternating APIs does not
-// create a derivative spike.
-float trackLine2PreviousError = 0;
-uint32_t trackLine2LastUpdate = 0;
-bool trackLine2HasPreviousError = false;
-
-void calculateTrackLine2(int Speed, float iKP, float iKD)
-{
-    KP = iKP / 10;
-    KD = iKD / 10;
-
-    // readline() mutates lastPosition, so read the sensors exactly once.
-    errors = readline() - setPoint;
-
-    uint32_t now = millis();
-    if (!trackLine2HasPreviousError || (now - trackLine2LastUpdate) > 100)
-    {
-        derivative = 0;
-        trackLine2HasPreviousError = true;
-    }
-    else
-    {
-        derivative = errors - trackLine2PreviousError;
-    }
-
-    output = (KP * errors) + (KD * derivative);
-    trackLine2PreviousError = errors;
-    trackLine2LastUpdate = now;
-
-    int baseSpeed = clamp(Speed, -100, 100);
-    leftMotor = clamp(baseSpeed - output, -100, 100);
-    rightMotor = clamp(baseSpeed + output, -100, 100);
-}
-
-// Motor selects one physical motor (1 to 4).
-// Example: trackLine2(25, 1.0, 1.0, 1);  // command M1 only
-void trackLine2(int Speed, float iKP, float DP, int Motor)
-{
-    if (Motor < 1 || Motor > 4)
-    {
-        return;
-    }
-
-    calculateTrackLine2(Speed, iKP, DP);
-    motor(Motor, (Motor <= 2) ? leftMotor : rightMotor);
-}
-
-// Two motors mean left:right.
-// Four motors mean left-top:left-bottom:right-top:right-bottom.
-// Examples: "1:2" or "1:2:3:4".
-void trackLine2(int Speed, float iKP, float DP, const char *Motors)
-{
-    int selected[4];
-    int count = 0;
-    const char *cursor = Motors;
-
-    if (cursor == NULL || *cursor == '\0')
-    {
-        return;
-    }
-
-    while (*cursor)
-    {
-        if (count >= 4)
-        {
-            return;
-        }
-
-        int motorNumber = 0;
-        bool hasDigit = false;
-        while (*cursor >= '0' && *cursor <= '9')
-        {
-            hasDigit = true;
-            motorNumber = motorNumber * 10 + (*cursor - '0');
-            cursor++;
-        }
-        if (!hasDigit || motorNumber < 1 || motorNumber > 4)
-        {
-            return;
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            if (selected[i] == motorNumber)
-            {
-                return;
-            }
-        }
-        selected[count++] = motorNumber;
-
-        if (*cursor == ':')
-        {
-            cursor++;
-            if (*cursor == '\0')
-            {
-                return;
-            }
-        }
-        else if (*cursor)
-        {
-            return;
-        }
-    }
-
-    if (count != 2 && count != 4)
-    {
-        return;
-    }
-
-    calculateTrackLine2(Speed, iKP, DP);
-
-    int leftCount = count / 2;
-    for (int i = 0; i < count; i++)
-    {
-        motor(selected[i], (i < leftCount) ? leftMotor : rightMotor);
-    }
-}
-// EASYKIDS_TRACK_LINE2_END
-'''
 
 VENDORED = [
     "Adafruit_BNO055.h", "Adafruit_BNO055.cpp",
@@ -202,8 +81,8 @@ def refresh_vendored(core_dir):
         copied.append(rel)
     return copied
 
-def update_line_follower(core_dir):
-    """Install trackLine2 and apply the safe one-read PID fixes."""
+def fix_track_line(core_dir):
+    """Apply compatibility fixes and remove an older embedded trackLine2."""
     pid_path = os.path.join(core_dir, "libraries", "EasyKids3in1Robot", "EasyKids_PID.h")
     if not os.path.isfile(pid_path):
         return False  # This board variant has no line-follower implementation.
@@ -230,12 +109,10 @@ def update_line_follower(core_dir):
         1,
     )
 
+    # 4.3.7 embedded trackLine2 in the EasyKids header.  CRU-CAR owns that
+    # API from 4.3.8 onward, so strip either known legacy form when rebuilding
+    # from an already-customized local core.
     marker = "\nvoid trackDashedLine("
-    if marker not in source:
-        sys.exit("trackLine insertion point not found: %s" % pid_path)
-
-    # Replace an older custom implementation when rebuilding from a locally
-    # installed package that already contains trackLine2.
     custom_start = source.find("\n// EASYKIDS_TRACK_LINE2_BEGIN")
     if custom_start < 0:
         custom_start = source.find("\n// Motor selects one physical motor (1 to 4).")
@@ -248,7 +125,7 @@ def update_line_follower(core_dir):
         sys.exit("unknown existing trackLine2 implementation: %s" % pid_path)
 
     with open(pid_path, "w", encoding="utf-8", newline="") as fh:
-        fh.write(source.replace(marker, "\n" + TRACK_LINE2 + marker, 1))
+        fh.write(source)
     return True
 
 def remove_readonly(func, path, exc_info):
@@ -302,10 +179,10 @@ def main():
         shutil.copytree(src, staged)
 
         copied = refresh_vendored(staged)
-        updated_line_follower = update_line_follower(staged)
+        updated_line_follower = fix_track_line(staged)
         print("[%s] refreshed %d vendored files" % (key, len(copied)), flush=True)
         if updated_line_follower:
-            print("[%s] updated line follower" % key, flush=True)
+            print("[%s] applied trackLine compatibility fixes" % key, flush=True)
 
         zip_name = "%s-%s.zip" % (key, VERSION)
         zip_path = os.path.join(DIST, zip_name)

@@ -2,22 +2,22 @@
   "esp32": {
     "architecture": "esp32",
     "board": "EasyKids3in1 BT-WiFi",
-    "archiveFileName": "esp32-4.3.7.zip",
-    "size": "256226726",
-    "checksum": "SHA-256:ABE31E154B32316C997CDA27984AC6E7C2C52C6AA715983385FE183410225960"
+    "archiveFileName": "esp32-4.3.8.zip",
+    "size": "256225965",
+    "checksum": "SHA-256:4E37FB8827189609B7876B06C5D2FBDB75D06D537B2C54408D4242133E81D936"
   },
   "esp32-aicar": {
     "architecture": "esp32-aicar",
     "board": "EasyKids3in1 AI-Car",
-    "archiveFileName": "esp32-aicar-4.3.7.zip",
+    "archiveFileName": "esp32-aicar-4.3.8.zip",
     "size": "256337539",
-    "checksum": "SHA-256:7D17206E335661F7945E023F145F99CCA86BF88BA4467AEBD31CD43BEE117FC5"
+    "checksum": "SHA-256:76F1280D565D9920291A7D89B44D2BACC287EE3723D4F6B6DC6B2BE3F5D8F35E"
   },
   "esp32-gamepad": {
     "architecture": "esp32-gamepad",
     "board": "EasyKids3in1 Gamepad",
-    "archiveFileName": "esp32-gamepad-4.3.7.zip",
-    "size": "345716047",
-    "checksum": "SHA-256:219EAE09B2A3FF8C65BD92EC3072CE05D2184DE4F16D9DC4552DAFC723FFCBA8"
+    "archiveFileName": "esp32-gamepad-4.3.8.zip",
+    "size": "345715286",
+    "checksum": "SHA-256:0343D894E93122ED4F5B60BD616F5E052819DE399A4BAEC13F92BB6076C75CB3"
   }
 }

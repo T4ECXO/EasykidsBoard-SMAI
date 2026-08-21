@@ -11,7 +11,7 @@ Arduino IDE → **File ▸ Preferences ▸ Additional boards manager URLs**, add
 https://raw.githubusercontent.com/T4ECXO/EasykidsBoard-SMAI/main/package_easykidsrobotics_index.json
 ```
 
-Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.7**.
+Then **Tools ▸ Board ▸ Boards Manager**, search `EasyKids`, install **4.3.8**.
 
 > Remove the upstream `EasyKidsRoboticsDev` boards URL first if you have it.
 > Both indexes declare the same package (`EasyKidsRobotics`) at the same version,
@@ -49,18 +49,34 @@ dependencies are refreshed while each core keeps its own `EasyKids_*.h` set
 (`EasyKids_AppControl.h` on BT-WiFi, `EasyKids_Gamepad.h` on Gamepad, and so
 on).
 
-**Line following has an additional stable motor-mapping API.** `trackLine2`
-accepts either two motor numbers (`"left:right"`) or four motor numbers
-(`"left-top:left-bottom:right-top:right-bottom"`). For example:
+## CRU-CAR line-following package
+
+**`trackLine2` now belongs to CRU-CAR, not the EasyKids core.** CRU-CAR is a
+small Arduino-library ZIP, so changes to its line-following behavior no longer
+require rebuilding and re-uploading the 250-345 MB board archives.
+
+Install EasyKids **4.3.8** first. Then download `CRU-CAR-<version>.zip` from
+the matching GitHub release and use **Sketch > Include Library > Add .ZIP
+Library...** in Arduino IDE. Include it in a sketch as:
+
+```cpp
+#include <CRU_CAR.h>
+```
+
+The public calls are unchanged:
 
 ```cpp
 trackLine2(30, 1.0, 1.0, "1:2");
-trackLine2(30, 1.0, 1.0, "1:2:3:4");
+trackLine2LR(40, 30, 1.0, 1.0, "1:2");
 ```
 
-It reads the line sensors once per update, keeps derivative history separate
-from `trackLine`, and suppresses derivative kick on the first update or after a
-pause. Invalid, duplicate, or ambiguous motor lists are ignored.
+`"left:right"` selects two motors; `"left-top:left-bottom:right-top:right-bottom"`
+selects four. `trackLine2LR(leftSpeed, rightSpeed, KP, KD, motors)` uses a separate base speed for each side; PID then subtracts its correction from the left speed and adds it to the right speed. Invalid, duplicate, or ambiguous motor lists are ignored. PID
+history remains independent from `trackLine()`, and the first update (or one
+after a pause) suppresses derivative kick.
+
+> EasyKids 4.3.7 contains the earlier built-in `trackLine2`. Do not install
+> CRU-CAR with 4.3.7 because both define the same public functions.
 
 | Library | Upstream 4.3.6 | Here |
 |---|---|---|
@@ -89,14 +105,14 @@ Requires the cores already installed in `Arduino15` and Python 3.
 ```sh
 python tools/build_archives.py      # stage cores, refresh vendored libs, zip, hash
 python tools/make_index.py          # write package_easykidsrobotics_index.json
+python tools/build_cru_car.py        # build small CRU-CAR library ZIP
 ```
 
 `build_archives.py` copies the installed cores into `staging/` before touching
 anything, so `Arduino15` is never modified. Archives land in `dist/` with their
 SHA-256 and size recorded in `dist/archives.json`.
 
-Then attach the three zips from `dist/` to a GitHub release tagged `4.3.7` and
-push the regenerated index. The archives are 230–320 MB each, over GitHub's
+Then attach the three board zips and `CRU-CAR-<version>.zip` from `dist/` to a GitHub release tagged `4.3.8`, then push the regenerated index. CRU-CAR can be released by itself when only line-following code changes. The archives are 230–320 MB each, over GitHub's
 100 MB per-file limit for repository contents, so they have to be release
 assets — `dist/` is gitignored for that reason.
 

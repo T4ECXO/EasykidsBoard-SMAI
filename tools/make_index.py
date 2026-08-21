@@ -18,7 +18,7 @@ import json
 import os
 import sys
 
-VERSION = "4.3.7"
+VERSION = "4.3.8"
 SOURCE_VERSION = os.environ.get("EASYKIDS_SOURCE_VERSION", "4.3.5")
 PACKAGE_NAME = "EasyKidsRobotics"
 RELEASE_BASE = "https://github.com/T4ECXO/EasykidsBoard-SMAI/releases/download/" + VERSION
